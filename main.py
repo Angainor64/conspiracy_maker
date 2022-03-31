@@ -8,13 +8,16 @@ from sklearn.pipeline import Pipeline
 import numpy as np
 
 
+timeframe = '2004-01-01 2022-03-01'
+
+
 def main():
     pytrends = TrendReq(hl='en-US', tz=360)
     # kw_list = ['AJR', 'Of Monsters And Men', 'Geocaching']
     kw_list = ['AJR']
     for kw in kw_list:
         print(kw)
-        pytrends.build_payload([kw])
+        pytrends.build_payload([kw], timeframe=timeframe)
         result = pytrends.interest_over_time().reset_index()
         if 'results' not in locals():
             results = result
@@ -22,7 +25,7 @@ def main():
             results = pd.merge(results, result, on='date')
     # results.plot(x='date', y=kw_list)
 
-    # print(results)
+    print(results)
     # print(np.asarray(results))
     nparray_results = np.asarray(results)
     x = np.arange(nparray_results.shape[0]).reshape(-1, 1)
