@@ -53,20 +53,20 @@ def fix_word(word: str):
         if len(split := re.split(r', ([Tt]he)$', word)) > 1:
             word = f'{split[1]} {split[0]}'
     loc = {'word': word}
-    # if re.match(r'(?:\\x[a-f0-9]{2})+', word):
-    #     error_text = 'ERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERROR'
-    #     loc['word'] = error_text
-    #     print(word)
-    #     exec(f'word = b"{word}".decode("utf-8")', globals(), loc)
-    #     print(loc['word'], '\n')
+    if re.match(r'(?:\\x[a-f0-9]{2})+', word):
+        error_text = 'ERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERROR'
+        loc['word'] = error_text
+        print(word)
+        exec(f'word = b"{word}".decode(errors="ignore")', globals(), loc)
+        print(loc['word'], '\n')
     return loc['word']
 
 
 def fix_words():
     words = read_file('unique_words.txt')
-    with open('words.txt', 'wb') as f:
+    with open('words.txt', 'w', encoding='utf-8') as f:
         for word in map(fix_word, words):
-            f.write(f'{word}\n'.encode('utf-8'))
+            f.write(f'{word}\n')
 
 
 if __name__ == '__main__':

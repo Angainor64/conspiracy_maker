@@ -8,13 +8,13 @@ from sklearn.pipeline import Pipeline
 import numpy as np
 
 
-timeframe = '2004-01-01 2022-03-01'
+timeframe = '2004-01-01 2022-01-01'
 
 
 def main():
     pytrends = TrendReq(hl='en-US', tz=360)
-    # kw_list = ['AJR', 'Of Monsters And Men', 'Geocaching']
-    kw_list = ['AJR']
+    kw_list = ['AJR', 'Of Monsters And Men', 'Geocaching']
+    # kw_list = ['AJR']
     for kw in kw_list:
         print(kw)
         pytrends.build_payload([kw], timeframe=timeframe)

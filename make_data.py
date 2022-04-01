@@ -1,6 +1,13 @@
 from dataclasses import dataclass
 from pickle import dump, load
 from typing import List, Iterator, Iterable
+from pytrends.request import TrendReq
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.pipeline import Pipeline
+import numpy as np
+from main import timeframe
 
 
 @dataclass(frozen=True)
@@ -25,5 +32,8 @@ def load_all(filename: str) -> Iterator[WordData]:
                 break
 
 
-loader = load_all('file.dat')
+# def get_trends(word: str, req: TrendReq) -> :
 
+
+
+loader = load_all('file.dat')
