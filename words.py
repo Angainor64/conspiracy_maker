@@ -4,15 +4,8 @@ from typing import Iterator, Union
 from urllib.error import HTTPError
 
 
-# TODO: Things to fix from unique_words.txt:
-# things that end in ', the'
-#   ', the
-# Lincoln, Abraham
-#   Single word, comma space '\w+, '
-
-
-def read_file(filename: str) -> Iterator[Union[str, bytes]]:
-    with open(filename, 'r') as f:
+def read_file(filename: str, encoding: str = 'ascii') -> Iterator[Union[str]]:
+    with open(filename, 'r', encoding=encoding) as f:
         curr = ' '
         while (curr := f.readline()) != '':
             yield curr[:-1]
@@ -69,8 +62,21 @@ def fix_words():
             f.write(f'{word}\n')
 
 
+def remove_trailing_dash():
+    words = read_file('words.txt', 'utf-8')
+    out = set()
+    for word in words:
+        if word.count('-') == len(word):
+            continue
+        while word[0] == '-':
+            word = word[1:]
+        while word[-1] == '-':
+            word = word[:-1]
+        out.add(word)
+    with open('words.txt', 'w', encoding='utf-8') as f:
+        for word in out:
+            f.write(f'{word}\n')
+
+
 if __name__ == '__main__':
-    fix_words()
-    # with open('unique_words.txt', 'r') as f:
-    #     words = f.read().splitlines()
-    #     exec(f'print(b"{words[434]}".decode("utf-8"))')
+    remove_trailing_dash()

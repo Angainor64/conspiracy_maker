@@ -1,31 +1,39 @@
-from pytrends.request import TrendReq
-import matplotlib
-import matplotlib.pyplot as plt
-import pandas as pd
-from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.pipeline import Pipeline
-import numpy as np
+from dataclasses import dataclass
+from typing import List
 
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from pytrends.request import TrendReq
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import PolynomialFeatures
 
 timeframe = '2004-01-01 2022-01-01'
 
 
+@dataclass(frozen=True)
+class WordData:
+    word: str
+    data: List[int]
+    derivative: List[float]
+
+
 def main():
     pytrends = TrendReq(hl='en-US', tz=360)
-    kw_list = ['AJR', 'Of Monsters And Men', 'Geocaching']
-    # kw_list = ['AJR']
+    # kw_list = ['AJR', 'Of Monsters And Men', 'Geocaching']
+    kw_list = ['AJR']
     for kw in kw_list:
         print(kw)
         pytrends.build_payload([kw], timeframe=timeframe)
         result = pytrends.interest_over_time().reset_index()
         if 'results' not in locals():
-            results = result
+            results: pd.DataFrame = result
         else:
             results = pd.merge(results, result, on='date')
     # results.plot(x='date', y=kw_list)
 
-    print(results)
+    print(results[kw_list[0]].values.tolist())
     # print(np.asarray(results))
     nparray_results = np.asarray(results)
     x = np.arange(nparray_results.shape[0]).reshape(-1, 1)

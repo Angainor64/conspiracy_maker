@@ -21,5 +21,15 @@ def bar():
         print(line.decode('utf-8'))
 
 
+def gen_testing():
+    i = 0
+    while True:
+        i += 1
+        yield i
+
+
 if __name__ == '__main__':
-    foo()
+    a = gen_testing()
+    for i in a:
+        i = a.__next__()
+        print(i)

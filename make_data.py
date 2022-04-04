@@ -1,24 +1,19 @@
-from dataclasses import dataclass
 from pickle import dump, load
+from time import sleep, time
 from typing import List, Iterator, Iterable
+
+from pytrends.exceptions import ResponseError
 from pytrends.request import TrendReq
-import pandas as pd
-from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.pipeline import Pipeline
-import numpy as np
-from main import timeframe
+from requests.exceptions import ReadTimeout, ConnectionError
+
+from main import WordData
+from words import read_file
+
+timeframe = '2004-01-01 2022-01-01'
 
 
-@dataclass(frozen=True)
-class WordData:
-    word: str
-    data: List[int]
-    derivative: List[float]
-
-
-def dump_all(filename: str, data: Iterable[WordData]) -> None:
-    with open(filename, 'wb') as f:
+def dump_all(filename: str, data: Iterable[WordData], mode: str = 'a') -> None:
+    with open(filename, f'{mode}b') as f:
         for thing in data:
             dump(thing, f)
 
@@ -32,8 +27,71 @@ def load_all(filename: str) -> Iterator[WordData]:
                 break
 
 
-# def get_trends(word: str, req: TrendReq) -> :
+def get_trend(word: str, req: TrendReq) -> List[int]:
+    req.build_payload([word], timeframe=timeframe)
+    return req.interest_over_time().reset_index()[word].values.tolist()
 
 
+def get_derivative(data: List[int]) -> List[float]:
+    out: List[float] = []
+    for i in range(1, len(data) - 1):
+        y1, y2 = data[i - 1], data[i + 1]
+        x1, x2 = i - 1, i + 1
+        out.append((y2 - y1) / (x2 - x1))
+    return out
 
-loader = load_all('file.dat')
+
+def get_all_word_data(words: Iterator[str], last_done: str = None) -> Iterator[WordData]:
+    found_start = last_done is None
+    req = TrendReq(hl='en-US', tz=360)
+    for word in words:
+        if not found_start:
+            if word == last_done:
+                found_start = True
+                word = words.__next__()
+            continue
+        while True:
+            try:
+                print(f'Attempting to build payload for {word}...', end='')
+                req.build_payload([word], timeframe=timeframe)
+                print('Done.')
+                break
+            except ResponseError as e:
+                print('\nResponse error. Waiting 60 secs...')
+                sleep(60)
+        while True:
+            try:
+                print(f'Attempting to get interest over time for {word}...', end='')
+                result = req.interest_over_time().reset_index()
+                print('Done.')
+                break
+            except ResponseError as e:
+                print('\nResponse error. Waiting 60 secs...')
+                sleep(60)
+        if result.empty:
+            continue
+        data = result[word].values.tolist()
+        derivative = get_derivative(data)
+        yield WordData(word, data, derivative)
+
+
+def get_remaining_word_data() -> None:
+    last = ''
+    words = read_file('words.txt', 'utf-8')
+    try:
+        for word_data in load_all('word_data.dat'):
+            last = word_data.word
+        dump_all('word_data.dat', get_all_word_data(words, last))
+    except FileNotFoundError:
+        dump_all('word_data.dat', get_all_word_data(words))
+
+
+if __name__ == '__main__':
+    # all_words = read_file('words.txt', 'utf-8')
+    # print(set(map(lambda a: a[0], all_words)))
+    while True:
+        try:
+            get_remaining_word_data()
+        except ReadTimeout or ConnectionError as e:
+            print(e.strerror)
+            print(f'{time()=}')
