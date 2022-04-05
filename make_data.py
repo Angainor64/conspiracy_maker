@@ -6,7 +6,7 @@ from pytrends.exceptions import ResponseError
 from pytrends.request import TrendReq
 from requests.exceptions import RequestException
 
-from main import WordData
+from word_data import WordData
 from words import read_file
 
 

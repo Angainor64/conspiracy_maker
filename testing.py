@@ -28,6 +28,22 @@ def gen_testing():
         yield i
 
 
+def run_command(cmd):
+    ['go', 'east', 'rm', 'stuff']
+    allowed = ['northwest', 'east', 'north']
+    match cmd.split():
+        case ['exit']:
+            print('quit terminal')
+        case ['rm', *files]:
+            for file in files:
+                print(f'Removing {file}')
+        case ['go', ('north', 'south', 'east', 'west') as direction]:
+            print(f'Going {direction}')
+        case ['go', direction] if direction in allowed:
+            print(f'Going {direction}')
+
+
+
 if __name__ == '__main__':
     a = gen_testing()
     for i in a:
