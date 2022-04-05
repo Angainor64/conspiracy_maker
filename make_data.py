@@ -1,15 +1,21 @@
 from pickle import dump, load
-from time import sleep, time
+from time import sleep, strftime
 from typing import List, Iterator, Iterable
 
 from pytrends.exceptions import ResponseError
 from pytrends.request import TrendReq
-from requests.exceptions import ReadTimeout, ConnectionError
+from requests.exceptions import RequestException
 
 from main import WordData
 from words import read_file
 
+
 timeframe = '2004-01-01 2022-01-01'
+
+
+class MaxRetriesExceeded(RuntimeError):
+    def __init__(self):
+        super().__init__()
 
 
 def dump_all(filename: str, data: Iterable[WordData], mode: str = 'a') -> None:
@@ -92,6 +98,6 @@ if __name__ == '__main__':
     while True:
         try:
             get_remaining_word_data()
-        except ReadTimeout or ConnectionError as e:
-            print(e.strerror)
-            print(f'{time()=}')
+        except RequestException as e:
+            print(str(e))
+            print(strftime('%H:%M'))
