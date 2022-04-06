@@ -93,11 +93,10 @@ def get_remaining_word_data() -> None:
 
 
 if __name__ == '__main__':
-    # all_words = read_file('words.txt', 'utf-8')
-    # print(set(map(lambda a: a[0], all_words)))
     while True:
         try:
             get_remaining_word_data()
         except RequestException as e:
+            print()
             print(str(e))
             print(strftime('%H:%M'))

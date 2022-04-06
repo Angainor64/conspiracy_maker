@@ -1,5 +1,4 @@
-from dataclasses import dataclass
-from typing import List, Iterable, Tuple
+from typing import List, Iterable, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,26 +15,35 @@ from word_data import WordData
 timeframe = '2004-01-01 2022-01-01'
 
 
-def get_word_derivative(word: str) -> List[float]:
+def get_word_data(word: str) -> WordData:
     req = TrendReq(hl='en-US', tz=360)
-    return get_derivative(get_trend(word, req))
+    data = get_trend(word, req)
+    derivative = get_derivative(data)
+    return WordData(word, data, derivative)
 
 
 def get_array_difference(array1: List[float], array2: List[float]) -> float:
     return sum([abs(a - b) for a, b in zip(array1, array2)])
 
 
-def find_min_diff(word: str, num_return: int = 1, word_list: Iterable[WordData] = None) -> List[Tuple[str, float]]:
+def get_word_data_difference(word1: WordData, word2: WordData, weights: Tuple) -> float:
+    data_diff = get_array_difference(word1.data, word2.data) * weights[0]
+    deriv_diff = get_array_difference(word1.derivative, word2.derivative) * weights[1]
+    return data_diff + deriv_diff
+
+
+def find_min_diff(word: str, weights: Tuple, num_return: int = 1, word_list: Iterable[WordData] = None) \
+        -> List[Tuple[str, float]]:
     if num_return < 1:
         raise ValueError('num_return must be greater than 0')
     out: List[Tuple[str, float]] = []
     if word_list is None:
         word_list = load_all('word_data.dat')
-    deriv = get_word_derivative(word)
+    word_data = get_word_data(word)
     i = 1
     for other in word_list:
         i += 1
-        diff = get_array_difference(deriv, other.derivative)
+        diff = get_word_data_difference(word_data, other, weights)
         if len(out) == num_return:
             if diff > out[-1][1]:
                 continue
@@ -51,15 +59,14 @@ def find_min_diff(word: str, num_return: int = 1, word_list: Iterable[WordData] 
     return out
 
 
-def main():
+def display_results(word: str, num_results: int, weights: Tuple):
     pytrends = TrendReq(hl='en-US', tz=360)
     # kw_list = ['AJR', 'Of Monsters And Men', 'Geocaching']
-    target = 'A&M'
-    min_diffs = find_min_diff(target, 2)
+    min_diffs = find_min_diff(word, weights, num_results + 1)
     kw_list = [result[0] for result in min_diffs]
-    if target in kw_list:
-        kw_list.remove(target)
-    kw_list = [target] + [kw_list[0]]
+    if word in kw_list:
+        kw_list.remove(word)
+    kw_list = [word] + kw_list[0:num_results]
     for kw in kw_list:
         print(kw)
         pytrends.build_payload([kw], timeframe=timeframe)
@@ -69,24 +76,27 @@ def main():
         else:
             results = pd.merge(results, result, on='date')
     results.plot(x='date', y=kw_list)
-
-    # print(results[kw_list[0]].values.tolist())
-    # print(np.asarray(results))
-    # nparray_results = np.asarray(results)
-    # x = np.arange(nparray_results.shape[0]).reshape(-1, 1)
-    # y = nparray_results[:, 1].reshape(-1, 1)
-    # plt.plot(x, y)
-    # steps = [('polynomial', PolynomialFeatures(degree=10)), ('modal', LinearRegression())]
-    # pipe = Pipeline(steps)
-    # pipe.fit(x, y)
-    # poly_pred = pipe.predict(x)
-    # sorted_zip = sorted(zip(x, poly_pred))
-    # x_poly, poly_pred = zip(*sorted_zip)
-    # plt.plot(x_poly, poly_pred)
     plt.show()
+
+
+# def main():
+#     print(results[kw_list[0]].values.tolist())
+#     print(np.asarray(results))
+#     nparray_results = np.asarray(results)
+#     x = np.arange(nparray_results.shape[0]).reshape(-1, 1)
+#     y = nparray_results[:, 1].reshape(-1, 1)
+#     plt.plot(x, y)
+#     steps = [('polynomial', PolynomialFeatures(degree=10)), ('modal', LinearRegression())]
+#     pipe = Pipeline(steps)
+#     pipe.fit(x, y)
+#     poly_pred = pipe.predict(x)
+#     sorted_zip = sorted(zip(x, poly_pred))
+#     x_poly, poly_pred = zip(*sorted_zip)
+#     plt.plot(x_poly, poly_pred)
+#     plt.show()
 
 
 if __name__ == '__main__':
     # final = find_min_diff('Ted Cruz', 10)
     # print(f'\nFinal:\n{final}')
-    main()
+    display_results('Putin', 1, (1, 5))
