@@ -10,7 +10,7 @@ from word_data import WordData
 from words import read_file
 
 
-timeframe = '2004-01-01 2022-01-01'
+timeframe = "2004-01-01 2022-01-01"
 
 
 class MaxRetriesExceeded(RuntimeError):
@@ -18,14 +18,14 @@ class MaxRetriesExceeded(RuntimeError):
         super().__init__()
 
 
-def dump_all(filename: str, data: Iterable[WordData], mode: str = 'a') -> None:
-    with open(filename, f'{mode}b') as f:
+def dump_all(filename: str, data: Iterable[WordData], mode: str = "a") -> None:
+    with open(filename, f"{mode}b") as f:
         for thing in data:
             dump(thing, f)
 
 
 def load_all(filename: str) -> Iterator[WordData]:
-    with open(filename, 'rb') as f:
+    with open(filename, "rb") as f:
         while True:
             try:
                 yield load(f)
@@ -47,9 +47,11 @@ def get_derivative(data: List[int]) -> List[float]:
     return out
 
 
-def get_all_word_data(words: Iterator[str], last_done: str = None) -> Iterator[WordData]:
+def get_all_word_data(
+    words: Iterator[str], last_done: str = None
+) -> Iterator[WordData]:
     found_start = last_done is None
-    req = TrendReq(hl='en-US', tz=360)
+    req = TrendReq(hl="en-US", tz=360)
     for word in words:
         if not found_start:
             if word == last_done:
@@ -58,21 +60,21 @@ def get_all_word_data(words: Iterator[str], last_done: str = None) -> Iterator[W
             continue
         while True:
             try:
-                print(f'Attempting to build payload for {word}...', end='')
+                print(f"Attempting to build payload for {word}...", end="")
                 req.build_payload([word], timeframe=timeframe)
-                print('Done.')
+                print("Done.")
                 break
             except ResponseError as e:
-                print('\nResponse error. Waiting 60 secs...')
+                print("\nResponse error. Waiting 60 secs...")
                 sleep(60)
         while True:
             try:
-                print(f'Attempting to get interest over time for {word}...', end='')
+                print(f"Attempting to get interest over time for {word}...", end="")
                 result = req.interest_over_time().reset_index()
-                print('Done.')
+                print("Done.")
                 break
             except ResponseError as e:
-                print('\nResponse error. Waiting 60 secs...')
+                print("\nResponse error. Waiting 60 secs...")
                 sleep(60)
         if result.empty:
             continue
@@ -82,21 +84,21 @@ def get_all_word_data(words: Iterator[str], last_done: str = None) -> Iterator[W
 
 
 def get_remaining_word_data() -> None:
-    last = ''
-    words = read_file('words.txt', 'utf-8')
+    last = ""
+    words = read_file("../words/words.txt", "utf-8")
     try:
-        for word_data in load_all('word_data.dat'):
+        for word_data in load_all("../words/word_data.dat"):
             last = word_data.word
-        dump_all('word_data.dat', get_all_word_data(words, last))
+        dump_all("../words/word_data.dat", get_all_word_data(words, last))
     except FileNotFoundError:
-        dump_all('word_data.dat', get_all_word_data(words))
+        dump_all("../words/word_data.dat", get_all_word_data(words))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     while True:
         try:
             get_remaining_word_data()
         except RequestException as e:
             print()
             print(str(e))
-            print(strftime('%H:%M'))
+            print(strftime("%H:%M"))
